@@ -3,7 +3,7 @@ from pygame.locals import *
 
 class stage(object):
     stgConf = {"resolution": (1200,750), 
-               "tileSize": 80,
+               "tileSize": 50,
                "scene": "0000",
                "realX": 0,
                "realY": 0,
@@ -19,6 +19,7 @@ class stage(object):
                           "bottomLine": 0
                           }
              }
+    resources = {"tiles": {}}
     
     def __init__(self):
         self.stgConf['tilesX'] = int(math.floor(self.stgConf['resolution'][0]/self.stgConf['tileSize']))
@@ -44,23 +45,32 @@ class stage(object):
             self.setAvatar()
             pygame.display.update()            
             pygame.display.update()
+            mainClock = pygame.time.Clock().tick(40)
 
     def setKeyEvents(self, event):
-        print(event)
         if(event.key==276):
-            self.avatar['posi']['x'] -=1
+            if self.avatar['posi']['x']>0 and self.sceneData["tiles"][self.avatar['posi']['x']-1][self.avatar['posi']['y']]["W"]==1:
+                self.avatar['posi']['x'] -=1
         if(event.key==275):
-            self.avatar['posi']['x'] +=1
+            if self.avatar['posi']['x']<self.sceneData["conf"]["dimensions"][0]-1 and self.sceneData["tiles"][self.avatar['posi']['x']+1][self.avatar['posi']['y']]["W"]==1:
+                self.avatar['posi']['x'] +=1
         if(event.key==273):
-            self.avatar['posi']['y'] -=1
+            if self.avatar['posi']['y']>0 and self.sceneData["tiles"][self.avatar['posi']['x']][self.avatar['posi']['y']-1]["W"]==1:
+                self.avatar['posi']['y'] -=1
         if(event.key==274):
-            self.avatar['posi']['y'] +=1            
+            if self.avatar['posi']['y']<self.sceneData["conf"]["dimensions"][1]-1 and self.sceneData["tiles"][self.avatar['posi']['x']][self.avatar['posi']['y']+1]["W"]==1:
+                self.avatar['posi']['y'] +=1            
     
     def loadScene(self):
         scene = sceneLoader.sceneLoader(self.stgConf['scene'])
         self.sceneData = scene.jsonData
         self.avatar['posi']['x'] = self.sceneData['conf']["defaultTile"][0]
         self.avatar['posi']['y'] = self.sceneData['conf']["defaultTile"][1]
+        
+        for i in self.sceneData["loads"]["tiles"]:
+            self.resources["tiles"][i] = pygame.transform.scale(pygame.image.load(self.sceneData["loads"]["tiles"][i]), 
+                                                                (self.stgConf['tileSize'], self.stgConf['tileSize'])
+                                                                )
     
     def setAvatar(self):
         pygame.draw.rect(self.stage, 
@@ -72,15 +82,19 @@ class stage(object):
                  )
              )
     
-    def setGrid(self):
+    def setVisibles(self):
         self.scene['visibles']['leftColumn'] = self.avatar['posi']['x'] - int(math.floor(self.stgConf['tilesX']/2))
         self.scene['visibles']['topLine'] = self.avatar['posi']['y'] - int(math.floor(self.stgConf['tilesY']/2))
         self.scene['visibles']['rightColumn'] = self.scene['visibles']['leftColumn'] + self.stgConf['tilesX']
         self.scene['visibles']['bottomLine'] = self.scene['visibles']['topLine'] + self.stgConf['tilesY']
+    
+    def setGrid(self):
+        self.setVisibles()
+        
         tileId = pygame.font.SysFont(None, 16)
         for x in range(self.stgConf['tilesX']):
             for y in range(self.stgConf['tilesY']):
-                pygame.draw.rect(self.stage, 
+                rect = pygame.draw.rect(self.stage, 
                                  (255, 255, 255), 
                                     (x*self.stgConf['tileSize'] +self.stgConf['adj']['x'], 
                                      y*self.stgConf['tileSize'] +self.stgConf['adj']['y'], 
@@ -89,23 +103,28 @@ class stage(object):
                                      ),
                                  1
                                  )
-                
-                #DEBUG TEXT---------------------------------------------------------------------------
-                text = tileId.render("V: "+str(x)+" "+str(y), True, (255,0,0))
-                textRect = text.get_rect()
-                textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
-                textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 8
-                self.stage.blit(text, textRect)
-                
-                text = tileId.render("R:"+str(self.scene['visibles']['leftColumn']+x)+" "+str(self.scene['visibles']['topLine']+y), True, (255,0,0))
-                textRect = text.get_rect()
-                textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
-                textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 18
-                self.stage.blit(text, textRect)
-                #-------------------------------------------------------------------------------------
-                
+ 
+                 
                 self.grid[x][y] = {"R": (self.scene['visibles']['leftColumn']+x, self.scene['visibles']['topLine']+y)}
-        
+                
+                if(self.grid[x][y]['R'][0]>=0 and self.grid[x][y]['R'][0]<len(self.sceneData["tiles"])):
+                    if(self.grid[x][y]['R'][1]>=0 and self.grid[x][y]['R'][1]<len(self.sceneData["tiles"][self.grid[x][y]['R'][0]])):
+                        self.stage.blit(self.resources["tiles"][str(self.sceneData["tiles"][self.grid[x][y]['R'][0]][self.grid[x][y]['R'][1]]["T"])], rect)
+                                       
+                #DEBUG TEXT---------------------------------------------------------------------------
+                #text = tileId.render("V: "+str(x)+" "+str(y), True, (255,0,0))
+                #textRect = text.get_rect()
+                #textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
+                #textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 8
+                #self.stage.blit(text, textRect)
+                
+                #text = tileId.render("R:"+str(self.scene['visibles']['leftColumn']+x)+" "+str(self.scene['visibles']['topLine']+y), True, (255,0,0))
+                #textRect = text.get_rect()
+                #textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
+                #textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 18
+                #self.stage.blit(text, textRect)
+                #-------------------------------------------------------------------------------------
+
 stage = stage()
 
 """
