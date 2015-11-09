@@ -2,7 +2,7 @@ import pygame, sys, time, math, sceneLoader
 from pygame.locals import *
 
 class stage(object):
-    stgConf = {"resolution": (1200,750), 
+    stgConf = {"resolution": (800,600), 
                "tileSize": 50,
                "scene": "0000",
                "realX": 0,
@@ -20,6 +20,7 @@ class stage(object):
                           }
              }
     resources = {"tiles": {}}
+    ranges = {}
     
     def __init__(self):
         self.stgConf['tilesX'] = int(math.floor(self.stgConf['resolution'][0]/self.stgConf['tileSize']))
@@ -30,6 +31,8 @@ class stage(object):
         pygame.init()
         self.stage = pygame.display.set_mode(self.stgConf['resolution'], HWSURFACE|DOUBLEBUF)
         pygame.display.set_caption("TRAIN.ME")
+        self.setColFromStr()
+        self.setRowFromStr()
         self.loadScene()
         
         while True:
@@ -71,6 +74,40 @@ class stage(object):
             self.resources["tiles"][i] = pygame.transform.scale(pygame.image.load(self.sceneData["loads"]["tiles"][i]), 
                                                                 (self.stgConf['tileSize'], self.stgConf['tileSize'])
                                                                 )
+            
+        if len(self.sceneData['tiles_range'])>0:
+            for i in self.sceneData['tiles_range']:
+                if isinstance(i['ini_col'], basestring):
+                    iniC = self.colString[i['ini_col']]
+                else:
+                    iniC = i['ini_col']
+                if isinstance(i['ini_row'], basestring):
+                    iniR = self.colString[i['ini_row']]
+                else:
+                    iniR = i['ini_row']
+                if isinstance(i['end_col'], basestring):
+                    endC = self.colString[i['end_col']]
+                else:
+                    endC = i['end_col']
+                if isinstance(i['end_col'], basestring):
+                    endR = self.colString[i['end_col']]
+                else:
+                    endR = i['end_col']
+                    
+                for rX in range(endC, iniC):
+                    self.ranges[str(rX)] = {}
+                    for rY in range(endR, iniR):
+                        self.ranges[str(rX)][str(rY)] = {}
+                        self.ranges[str(rX)][str(rY)]["T"] = i['T']
+                        self.ranges[str(rX)][str(rY)]["W"] = i['W']
+                        
+    def setColFromStr(self):
+        self.colString = {"first_negative": -1, "last_negative": self.stgConf['tilesX']*-1,
+                          "firts_positive": 1, "last_positive": self.stgConf['tilesX']}
+
+    def setRowFromStr(self):
+        self.colString = {"first_negative": -1, "last_negative": self.stgConf['tilesY']*-1,
+                          "firts_positive": 1, "last_positive": self.stgConf['tilesY']}
     
     def setAvatar(self):
         pygame.draw.rect(self.stage, 
@@ -93,11 +130,15 @@ class stage(object):
         
         tileId = pygame.font.SysFont(None, 16)
         for x in range(self.stgConf['tilesX']):
+            xBase = x*self.stgConf['tileSize'] +self.stgConf['adj']['x']
+            xReal = self.scene['visibles']['leftColumn']+x
             for y in range(self.stgConf['tilesY']):
+                yBase = y*self.stgConf['tileSize'] +self.stgConf['adj']['y']
+                yReal = self.scene['visibles']['topLine']+y
                 rect = pygame.draw.rect(self.stage, 
                                  (255, 255, 255), 
-                                    (x*self.stgConf['tileSize'] +self.stgConf['adj']['x'], 
-                                     y*self.stgConf['tileSize'] +self.stgConf['adj']['y'], 
+                                    (xBase, 
+                                     yBase, 
                                      self.stgConf['tileSize'], 
                                      self.stgConf['tileSize']
                                      ),
@@ -105,11 +146,14 @@ class stage(object):
                                  )
  
                  
-                self.grid[x][y] = {"R": (self.scene['visibles']['leftColumn']+x, self.scene['visibles']['topLine']+y)}
+                self.grid[x][y] = {"R": (xReal, yReal)}
                 
-                if(self.grid[x][y]['R'][0]>=0 and self.grid[x][y]['R'][0]<len(self.sceneData["tiles"])):
-                    if(self.grid[x][y]['R'][1]>=0 and self.grid[x][y]['R'][1]<len(self.sceneData["tiles"][self.grid[x][y]['R'][0]])):
+                if(self.grid[x][y]['R'][0]>=0 and self.grid[x][y]['R'][0]<len(self.sceneData["tiles"])) or xReal in self.ranges:
+                    if(self.grid[x][y]['R'][1]>=0 and self.grid[x][y]['R'][1]<len(self.sceneData["tiles"][self.grid[x][y]['R'][0]])) or (xReal in self.ranges and yReal in self.ranges[xReal]):
                         self.stage.blit(self.resources["tiles"][str(self.sceneData["tiles"][self.grid[x][y]['R'][0]][self.grid[x][y]['R'][1]]["T"])], rect)
+
+                if(str(xReal) in self.ranges and str(yReal) in self.ranges[str(xReal)]):
+                    self.stage.blit(self.resources["tiles"][str(self.ranges[str(xReal)][str(xReal)]["T"])], rect)
                                        
                 #DEBUG TEXT---------------------------------------------------------------------------
                 #text = tileId.render("V: "+str(x)+" "+str(y), True, (255,0,0))
@@ -124,7 +168,9 @@ class stage(object):
                 #textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 18
                 #self.stage.blit(text, textRect)
                 #-------------------------------------------------------------------------------------
-
+                
+                #pygame.transform.rotate(rect, 45)
+        
 stage = stage()
 
 """
