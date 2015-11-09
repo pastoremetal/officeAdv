@@ -1150,10 +1150,10 @@
 	],
 	"tiles_range": [
 		{
-		"ini_col": "first_negative",
-		"ini_row": "first_negative",
+		"ini_col": "last_negative",
+		"ini_row": "last_negative",
 		"end_col": "last_positive",
-		"end_row": "last_negative",
+		"end_row": "firts_positive",
 		"T": 4,
 		"W": 0
 		}

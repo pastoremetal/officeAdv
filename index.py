@@ -31,8 +31,6 @@ class stage(object):
         pygame.init()
         self.stage = pygame.display.set_mode(self.stgConf['resolution'], HWSURFACE|DOUBLEBUF)
         pygame.display.set_caption("TRAIN.ME")
-        self.setColFromStr()
-        self.setRowFromStr()
         self.loadScene()
         
         while True:
@@ -69,6 +67,8 @@ class stage(object):
         self.sceneData = scene.jsonData
         self.avatar['posi']['x'] = self.sceneData['conf']["defaultTile"][0]
         self.avatar['posi']['y'] = self.sceneData['conf']["defaultTile"][1]
+        self.setColFromStr()
+        self.setRowFromStr()
         
         for i in self.sceneData["loads"]["tiles"]:
             self.resources["tiles"][i] = pygame.transform.scale(pygame.image.load(self.sceneData["loads"]["tiles"][i]), 
@@ -94,20 +94,22 @@ class stage(object):
                 else:
                     endR = i['end_col']
                     
-                for rX in range(endC, iniC):
+                for rX in range(iniC, endC):
                     self.ranges[str(rX)] = {}
-                    for rY in range(endR, iniR):
+                    for rY in range(iniR, endR):
+                        #print(str(rX)+" - "+str(rY))
                         self.ranges[str(rX)][str(rY)] = {}
                         self.ranges[str(rX)][str(rY)]["T"] = i['T']
                         self.ranges[str(rX)][str(rY)]["W"] = i['W']
+                       # print(self.ranges)
                         
     def setColFromStr(self):
         self.colString = {"first_negative": -1, "last_negative": self.stgConf['tilesX']*-1,
-                          "firts_positive": 1, "last_positive": self.stgConf['tilesX']}
+                          "firts_positive": 0, "last_positive": self.sceneData["conf"]["dimensions"][0]-1}
 
     def setRowFromStr(self):
         self.colString = {"first_negative": -1, "last_negative": self.stgConf['tilesY']*-1,
-                          "firts_positive": 1, "last_positive": self.stgConf['tilesY']}
+                          "firts_positive": 0, "last_positive": self.sceneData["conf"]["dimensions"][1]-1}
     
     def setAvatar(self):
         pygame.draw.rect(self.stage, 
@@ -156,17 +158,17 @@ class stage(object):
                     self.stage.blit(self.resources["tiles"][str(self.ranges[str(xReal)][str(xReal)]["T"])], rect)
                                        
                 #DEBUG TEXT---------------------------------------------------------------------------
-                #text = tileId.render("V: "+str(x)+" "+str(y), True, (255,0,0))
-                #textRect = text.get_rect()
-                #textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
-                #textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 8
-                #self.stage.blit(text, textRect)
+                text = tileId.render("V: "+str(x)+" "+str(y), True, (255,0,0))
+                textRect = text.get_rect()
+                textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
+                textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 8
+                self.stage.blit(text, textRect)
                 
-                #text = tileId.render("R:"+str(self.scene['visibles']['leftColumn']+x)+" "+str(self.scene['visibles']['topLine']+y), True, (255,0,0))
-                #textRect = text.get_rect()
-                #textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
-                #textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 18
-                #self.stage.blit(text, textRect)
+                text = tileId.render("R:"+str(self.scene['visibles']['leftColumn']+x)+" "+str(self.scene['visibles']['topLine']+y), True, (255,0,0))
+                textRect = text.get_rect()
+                textRect.centerx = x*self.stgConf['tileSize'] +self.stgConf['adj']['x'] + 22
+                textRect.centery = y*self.stgConf['tileSize'] +self.stgConf['adj']['y'] + 18
+                self.stage.blit(text, textRect)
                 #-------------------------------------------------------------------------------------
                 
                 #pygame.transform.rotate(rect, 45)
