@@ -19,9 +19,10 @@ class stage(object):
                           "bottomLine": 0
                           }
              }
-    resources = {"tiles": {}}
+    resources = {"tiles": {}, "overW": {}}
     ranges = {}
     keyPressed = {}
+    ttP = {276: [3, 0], 275: [3, 0], 274: [3, 0], 273: [3, 0]}
     
     def __init__(self):
         self.stgConf['tilesX'] = int(math.floor(self.stgConf['resolution'][0]/(self.stgConf['tileSize'][0]/3)))
@@ -46,28 +47,36 @@ class stage(object):
             self.stage.fill((0,0,0))
             self.setGrid()
             self.setAvatar()
-            pygame.display.update()            
-            pygame.display.update()
+            self.setOverW()
+            pygame.display.update()                 
             mainClock = pygame.time.Clock().tick(40)
     
     def execKeyEvents(self):
-        if(276 in self.keyPressed):
+        if(276 in self.keyPressed and self.ttP[276][1]==0):
             if self.avatar['posi']['x']>0 and self.sceneData["tiles"][self.avatar['posi']['x']-1][self.avatar['posi']['y']]["W"]==1:
                 self.avatar['posi']['x'] -=1
-        if(275 in self.keyPressed):
+        if(275 in self.keyPressed and self.ttP[275][1]==0):
             if self.avatar['posi']['x']<self.sceneData["conf"]["dimensions"][0]-1 and self.sceneData["tiles"][self.avatar['posi']['x']+1][self.avatar['posi']['y']]["W"]==1:
                 self.avatar['posi']['x'] +=1
-        if(273 in self.keyPressed):
+        if(273 in self.keyPressed and self.ttP[273][1]==0):
             if self.avatar['posi']['y']>0 and self.sceneData["tiles"][self.avatar['posi']['x']][self.avatar['posi']['y']-1]["W"]==1:
                 self.avatar['posi']['y'] -=1
-        if(274 in self.keyPressed):
+        if(274 in self.keyPressed and self.ttP[274][1]==0):
             if self.avatar['posi']['y']<self.sceneData["conf"]["dimensions"][1]-1 and self.sceneData["tiles"][self.avatar['posi']['x']][self.avatar['posi']['y']+1]["W"]==1:
                 self.avatar['posi']['y'] +=1
+                
+        for i in self.keyPressed:
+            if(self.ttP[i][1]==0):
+                self.ttP[i][1] = self.ttP[i][0]
+            else:
+                self.ttP[i][1] -= 1
     
     def setKeyEvents(self, event):
+        for i in self.keyPressed:
+            self.ttP[i][1] = 0
         if(event.type==KEYDOWN):
             self.keyPressed[event.key] = True
-        else:
+        elif(self.keyPressed.has_key(event.key)):
             del(self.keyPressed[event.key])
     
     def loadScene(self):
@@ -141,6 +150,23 @@ class stage(object):
         self.scene['visibles']['rightColumn'] = self.scene['visibles']['leftColumn'] + self.stgConf['tilesX']
         self.scene['visibles']['bottomLine'] = self.scene['visibles']['topLine'] + self.stgConf['tilesY']
     
+    def setOverW(self):
+        s = pygame.Surface((self.stgConf['tileSize'][0], self.stgConf['tileSize'][1]), pygame.SRCALPHA, 32)
+        s.fill((0,0,0,0))
+        for l, layer in self.resources["overW"].items():
+            for t, tile in layer.items():
+                rect = pygame.draw.rect(s, 
+                         (255, 255, 255), 
+                            (tile["x"] + tile["im"][3], 
+                             tile["y"] - tile["im"][2] + tile["im"][4], 
+                             tile["im"][1],
+                             tile["im"][2]
+                             ),
+                         1
+                         )
+                self.stage.blit(tile["im"][0], rect)
+            del(self.resources["overW"][l])
+    
     def setGrid(self):
         self.setVisibles()
         
@@ -158,14 +184,27 @@ class stage(object):
             xReal = self.scene['visibles']['leftColumn']+x
             for y in range(self.stgConf['tilesY']):
                 yReal = self.scene['visibles']['topLine']+y
-                xS = (self.stgConf['adj']['x'] + x*self.stgConf['tileSize'][0]) - (self.stgConf['tileSize'][0]/2*y) - (self.stgConf['tileSize'][0]/2*x) + xBase
-                yS = (self.stgConf['adj']['y'] + y*self.stgConf['tileSize'][1]) + (self.stgConf['tileSize'][1]/2*x) - (self.stgConf['tileSize'][1]/2*y) + yBase
+                xS = (self.stgConf['adj']['x'] + x*self.stgConf['tileSize'][0]) - (self.stgConf['tileSize'][0]/2*y) - (self.stgConf['tileSize'][0]/2*x) + xBase - self.stgConf['tileSize'][0]/2
+                yS = (self.stgConf['adj']['y'] + y*self.stgConf['tileSize'][1]) + (self.stgConf['tileSize'][1]/2*x) - (self.stgConf['tileSize'][1]/2*y) + yBase + self.stgConf['tileSize'][1]/2
                  
                 self.grid[x][y] = {"R": (xReal, yReal)}
                 
                 if(self.grid[x][y]['R'][0]>=0 and self.grid[x][y]['R'][0]<len(self.sceneData["tiles"])) or xReal in self.ranges:
                     if(self.grid[x][y]['R'][1]>=0 and self.grid[x][y]['R'][1]<len(self.sceneData["tiles"][self.grid[x][y]['R'][0]])) or (xReal in self.ranges and yReal in self.ranges[xReal]):
                         resImg = self.resources["tiles"][str(self.sceneData["tiles"][self.grid[x][y]['R'][0]][self.grid[x][y]['R'][1]]["T"])]
+                        
+                        if(self.sceneData["tiles"][self.grid[x][y]['R'][0]][self.grid[x][y]['R'][1]].has_key("L")):
+                            l = self.sceneData["tiles"][self.grid[x][y]['R'][0]][self.grid[x][y]['R'][1]]["L"]
+                            if not(self.resources["overW"].has_key(l)):
+                                self.resources["overW"][l] = {}
+                                
+                            self.resources["overW"][l][len(self.resources["overW"][l])] = {
+                                "x": xS,
+                                "y": yS,
+                                "im": resImg
+                            }
+                            continue
+                            
                         rect = pygame.draw.rect(s, 
                         #rect = pygame.draw.rect(self.stage,
                                  (255, 255, 255), 
