@@ -11,7 +11,18 @@ class stage(object):
                }
     avatar = {"posi": {"x": 0,
                        "y": 0,
-                       }              
+                       },
+              "sprite" :{
+                      "dimensions": {"w": 832, "h": 1344},
+                      "nums":{"x": 13, "y": 21},
+                      "file": pygame.transform.scale(pygame.image.load("imgs/avatar/e9Zh9HxR.png"), (832, 1344))        
+                      },
+              "moveSets": {
+                           #iniY, totalF
+                           "walkLeft": [9, 9],
+                           "walkDown": [10, 9]
+                           },
+              "ttC": [2][0]
               }
     scene = {"visibles": {"leftColumn": 0,
                           "RightColumn": 0,
@@ -135,14 +146,27 @@ class stage(object):
                           "firts_positive": 0, "last_positive": self.sceneData["conf"]["dimensions"][1]*2-1}
     
     def setAvatar(self):
-        pygame.draw.rect(self.stage, 
+        s = pygame.Surface((self.stgConf['tileSize'][0], self.stgConf['tileSize'][1]), pygame.SRCALPHA, 32)
+        s.fill((0,0,0,0))
+        rect = pygame.draw.rect(s, 
+                 (255, 255, 255), 
+                    (int(math.floor(self.stgConf['tilesX']/2))*self.stgConf['tileSize'][0] +self.stgConf['adj']['x'], 
+                     int(math.floor(self.stgConf['tilesY']/2))*self.stgConf['tileSize'][1] +self.stgConf['adj']['y'], 
+                     self.stgConf['tileSize'][0],
+                     self.stgConf['tileSize'][1]
+                     ),
+                 1
+                 )
+        self.stage.blit(self.avatar["sprite"]["file"], rect)
+        
+        """pygame.draw.rect(self.stage, 
              (255, 255, 0), 
                 (int(math.floor(self.stgConf['tilesX']/2))*self.stgConf['tileSize'][0] +self.stgConf['adj']['x'], 
                  int(math.floor(self.stgConf['tilesY']/2))*self.stgConf['tileSize'][1] +self.stgConf['adj']['y'], 
                  self.stgConf['tileSize'][0], 
                  self.stgConf['tileSize'][1]
                  )
-             )
+             )"""
     
     def setVisibles(self):
         self.scene['visibles']['leftColumn'] = self.avatar['posi']['x'] - int(math.floor(self.stgConf['tilesX']/2))
