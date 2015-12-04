@@ -140,9 +140,9 @@ class stage(object):
                     if not(self.ranges.has_key(str(rX))):
                         self.ranges[str(rX)] = {}
                     for rY in range(iniR, endR):
-                        self.ranges[str(rX)][str(rY)] = {}
-                        self.ranges[str(rX)][str(rY)]["T"] = i['T']
-                        self.ranges[str(rX)][str(rY)]["W"] = i['W']
+                        self.ranges[str(rX)][str(rY)] = {"T": i['T'], "W": i['W']}
+                        #self.ranges[str(rX)][str(rY)]["T"] = i['T']
+                        #self.ranges[str(rX)][str(rY)]["W"] = i['W']
                         if(i.has_key("L")):
                             self.ranges[str(rX)][str(rY)]["L"] = i['L']
                         
