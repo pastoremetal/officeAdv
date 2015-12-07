@@ -248,7 +248,7 @@ class stage(object):
                     if(self.ranges[str(xReal)][str(yReal)].has_key("L")):
                         l = self.ranges[str(xReal)][str(yReal)]["L"]
                         if not(self.resources["overW"].has_key(l)):
-                            self.resources["overW"][l] = {}
+                            self.resources["overW"][l] = {} 
                         self.resources["overW"][l][len(self.resources["overW"][l])] = {"x": xS, "y": yS, "im": resImg}
                         continue 
                                        
